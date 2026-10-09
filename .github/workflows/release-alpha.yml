@@ -1,0 +1,97 @@
+name: Alpha release
+
+on:
+  push:
+    tags:
+      - 'v*-alpha.*'
+
+concurrency:
+  group: alpha-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate tag and set package version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $number = '(0|[1-9][0-9]*)'
+          if ($tag -cnotmatch "^v$number\.$number\.$number-alpha\.$number`$") {
+            throw "Invalid alpha tag: $tag. Expected v<major>.<minor>.<patch>-alpha.<build>."
+          }
+          $version = $tag.Substring(1)
+          "version=$version" >> $env:GITHUB_OUTPUT
+          npm version $version --no-git-tag-version --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check types, lint, and unit tests
+        run: npm run check
+
+      - name: Build Windows installer
+        run: npm run build -- --publish never
+
+      - name: Run Electron E2E tests
+        run: npx playwright test
+
+      - name: Upload E2E failure report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: electron-e2e-failure
+          path: |
+            playwright-report/
+            test-results/playwright/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer
+          path: release/${{ steps.version.outputs.version }}/*.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download installer
+        uses: actions/download-artifact@v8
+        with:
+          name: windows-installer
+          path: installers
+
+      - name: Publish alpha pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" installers/*.exe \
+            --verify-tag --prerelease --latest=false \
+            --title "$RELEASE_TAG" --generate-notes

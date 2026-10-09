@@ -97,3 +97,23 @@ npm run test:e2e
 - [오버레이 기술 리서치](docs/RESEARCH.md)
 - [제품 및 운영 전략](docs/PRODUCT_STRATEGY.md)
 - [ADR 0001: 타이머 완료 여부를 파생 상태로 계산](docs/decisions/0001-derived-timer-completion.md)
+
+## 알파 릴리즈
+
+`v<기본버전>-alpha.<빌드번호>` 태그를 원격 저장소에 푸시하면
+`Alpha release` GitHub Actions가 Windows 설치 파일을 빌드하고 게시합니다.
+예: `v0.1.0-alpha.2026100901`. 빌드번호는 중복되지 않는 정수를 사용하고,
+앞에 0을 붙이지 않습니다. attempt는 버전에 포함하지 않습니다.
+태그를 먼저 만드는 방식이므로 빌드번호는 태그 생성 시 지정합니다.
+
+```bash
+git tag v0.1.0-alpha.2026100901
+git push origin v0.1.0-alpha.2026100901
+```
+
+워크플로 파일이 포함된 커밋에 태그를 생성하세요. CI에서만 패키지 버전을
+태그에 맞추며, 타입 검사, lint, 단위 테스트와 Electron E2E가 모두 통과하면
+GitHub pre-release를 게시합니다. 설치 파일은 코드 서명 없이 빌드합니다.
+인증에는 기본 `GITHUB_TOKEN`을 사용하며 별도 토큰 설정은 필요하지 않습니다.
+동일 태그의 릴리즈가 이미 존재하면 덮어쓰지 않고 실패합니다.
+새 빌드를 배포할 때는 새 빌드번호로 태그를 생성하세요.
