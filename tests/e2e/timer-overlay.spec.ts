@@ -93,14 +93,40 @@ test('creates and closes a timer overlay without deleting the timer', async ({},
       '00:05.00'
     );
 
+    const timerId = new URL(reopenedOverlay.url()).hash
+      .split('/')[2]
+      .split('?')[0];
     const closePromise = reopenedOverlay.waitForEvent('close');
-    await newTimer.getByTestId('remove-timer').click();
+    await reopenedOverlay.getByTestId('close-timer-overlay').click();
 
     await closePromise;
     await expect(timerItems).toHaveCount(initialCount + 1);
+    const retainedTimer = await mainWindow.evaluate(
+      (id) => Reflect.get(window, 'electronAPI').getTimer(id),
+      timerId
+    );
+    expect(retainedTimer?.id).toBe(timerId);
 
+    const finalOverlayPromise = electronApp.waitForEvent(
+      'window',
+      (page) => page !== mainWindow
+    );
+    await newTimer.getByTestId('open-timer').click();
+    const finalOverlay = await finalOverlayPromise;
+    await finalOverlay.waitForLoadState('domcontentloaded');
+    await expect(finalOverlay.getByTestId('timer-display')).toHaveText(
+      '00:05.00'
+    );
+
+    const removedOverlayPromise = finalOverlay.waitForEvent('close');
     await newTimer.getByTestId('remove-timer').click();
+    await removedOverlayPromise;
     await expect(timerItems).toHaveCount(initialCount);
+    const removedTimer = await mainWindow.evaluate(
+      (id) => Reflect.get(window, 'electronAPI').getTimer(id),
+      timerId
+    );
+    expect(removedTimer).toBeUndefined();
   } finally {
     await electronApp.close();
   }

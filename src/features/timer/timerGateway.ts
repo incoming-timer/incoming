@@ -17,7 +17,7 @@ export interface TimerGateway {
 
 type ElectronTimerAPI = Pick<
   ElectronAPI,
-  'createTimer' | 'createTimerWindow' | 'closeTimerWindow'
+  'createTimer' | 'createTimerWindow' | 'removeTimer'
 >;
 
 function createElectronTimerGateway(api: ElectronTimerAPI): TimerGateway {
@@ -26,7 +26,7 @@ function createElectronTimerGateway(api: ElectronTimerAPI): TimerGateway {
     createTimer: (options) => api.createTimer(options),
     openTimer: (timer) =>
       api.createTimerWindow(timer.id, timer.title, timer.duration),
-    removeTimer: (timerId) => api.closeTimerWindow(timerId),
+    removeTimer: (timerId) => api.removeTimer(timerId),
   };
 }
 

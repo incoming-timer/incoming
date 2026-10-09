@@ -13,11 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
-import {
-  baseTimerSchema,
-  type BaseTimer,
-  type Timer,
-} from '../shared/timer';
+import { baseTimerSchema, type BaseTimer, type Timer } from '../shared/timer';
 import { createTimerRepository } from './timerRepository';
 import { broadcast, handleIpc } from './ipcMainUtil';
 import { getTimer, onTick, updateTimer } from '../shared/timerIpc';
@@ -480,6 +476,7 @@ void app.whenReady().then(() => {
     const { timerRepository, persist } = await userContext;
 
     timerRepository.remove(timerId);
+    closeTimerWindow(timerId);
 
     broadcastTimers(timerRepository.getAll());
 
@@ -529,7 +526,6 @@ void app.whenReady().then(() => {
   ipcMain.handle('log', (_event, message: unknown) => {
     console.log(message);
   });
-
 
   setInterval(() => {
     broadcast(onTick, Date.now());
