@@ -1,9 +1,9 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   $schema: 'https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json',
-  appId: 'YourAppID',
+  appId: 'io.github.incoming-timer.incoming',
   asar: true,
-  productName: 'YourAppName',
+  productName: 'Incoming',
   directories: {
     output: 'release/${version}',
   },
@@ -22,6 +22,8 @@
     artifactName: '${productName}-Windows-${version}-Setup.${ext}',
   },
   nsis: {
+    // Preserve the installer identity generated from the original appId.
+    guid: 'e8a1d95b-2268-5534-a8b7-a46da8c43aa5',
     oneClick: false,
     perMachine: false,
     allowToChangeInstallationDirectory: true,

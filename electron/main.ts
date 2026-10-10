@@ -13,11 +13,16 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { productName } from '../package.json';
+import { configureAppIdentity } from './appIdentity';
 import { baseTimerSchema, type BaseTimer, type Timer } from '../shared/timer';
 import { createTimerRepository } from './timerRepository';
 import { broadcast, handleIpc } from './ipcMainUtil';
 import { getTimer, onTick, updateTimer } from '../shared/timerIpc';
 import { createLocalPersist, createLocalPersistedData } from './localPersist';
+
+// Set identity and the compatible data path before any persistence is created.
+configureAppIdentity(app);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -165,6 +170,7 @@ function getTrayInfo() {
 
 function createWindow() {
   win = new BrowserWindow({
+    title: productName,
     icon: path.join(VITE_PUBLIC_DIR, 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -228,12 +234,15 @@ function createOverlayTimerWindow(
     minimizable: false,
     maximizable: false,
     closable: true,
-    title: `${title} - ${timerId}`,
+    title,
     autoHideMenuBar: configs.OVERLAY_AUTO_HIDE_MENU_BAR,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   });
+
+  // The shared HTML title must not replace the user's timer title.
+  timerWin.on('page-title-updated', (event) => event.preventDefault());
 
   // Position window in top-right corner by default
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -452,6 +461,7 @@ void app.whenReady().then(() => {
 
     const options = validateUpdateTimerOption(unsafeOption);
     timerRepository.update(timerId, options);
+    timerWindows.get(timerId)?.setTitle(options.title);
 
     broadcastTimers(timerRepository.getAll());
 
