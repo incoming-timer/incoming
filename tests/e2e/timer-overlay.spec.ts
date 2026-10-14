@@ -1,8 +1,6 @@
-import { _electron as electron, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
-import path from 'node:path';
-
-const distMainPath = path.join(process.cwd(), 'dist-electron', 'main.js');
+import { distMainPath, launchTestApp } from './launchTestApp';
 
 // Playwright requires fixture arguments to use object destructuring.
 // eslint-disable-next-line no-empty-pattern
@@ -12,13 +10,7 @@ test('creates and closes a timer overlay without deleting the timer', async ({},
     'Run `npm run build` before executing Electron E2E tests.'
   );
 
-  const electronApp = await electron.launch({
-    args: [distMainPath],
-    env: {
-      ...process.env,
-      ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
-    },
-  });
+  const electronApp = await launchTestApp(testInfo);
 
   try {
     const mainWindow = await electronApp.firstWindow();

@@ -1,4 +1,6 @@
-# Timer Overlay
+# Incoming
+
+Incoming Timer Overlay
 
 게임 중 반복 이벤트를 놓치지 않도록 별도 오버레이 창에 카운트다운을
 표시하는 Electron 데스크톱 앱입니다.
@@ -91,6 +93,7 @@ npm run test:e2e
 
 ## 문서
 
+- [제품 식별자와 기존 설치 호환성](docs/product-identity.md)
 - [로드맵](docs/ROADMAP.md)
 - [시작하기 가이드](docs/getting-started.md)
 - [빌드 환경 변수 가이드](docs/build-environment.md)
